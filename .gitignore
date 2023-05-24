@@ -121,6 +121,7 @@ celerybeat.pid
 
 # Environments
 .01basic/
+.02_document_scanner/
 .01basic/assets/
 .env
 .venv
