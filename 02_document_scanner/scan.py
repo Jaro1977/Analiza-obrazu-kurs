@@ -44,3 +44,69 @@ def get_perspective(image, contours, ratio):
     M = cv2.getPerspectiveTransform(src = rectangle, dst = destination)
     warped_image = cv2.warpPerspective(src = image, M=M, dsize = (max_width, max_height))
     return warped_image
+
+ap = argparse.ArgumentParser()
+ap.add_argument('-i', '--image', required = True, help = 'path to image')
+args = vars(ap.parse_args())
+
+print(f'Numpy version: {np.__version__}')
+print(f'OpenCV version: {cv2.__version__}')
+
+#wczytanie obrazu z dokumetem
+image = cv2.imread(args['image'])
+original_image = image.copy()
+ratio = image.shape[0]/500.0
+image = imutils.resize(image, height = 500)
+
+#konwersja do skali szarości
+gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+cv2.imshow('gray_image', gray_image)
+
+#rozmycie
+gray_image = cv2.GaussianBlur(gray_image, (5,5), 0)
+cv2.imshow('gray_image_blurred', gray_image)
+
+#detekcja krawędzi
+
+edges = cv2.Canny(gray_image, 20 ,20)
+
+cv2.imshow('image', image)
+cv2.imshow('edges', edges)
+
+#znalezienie konturu dokumentu
+contours = cv2.findContours(edges.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+contours = imutils.grab_contours(contours)
+contours = sorted(contours, key = cv2.contourArea, reverse=True)[:5]
+
+screen_contour = None
+
+for contour in contours:
+    perimeter = cv2.arcLength(contour, True)
+    approx = cv2.approxPolyDP(contour, 0.02 * perimeter, True)
+
+    if len(approx) == 4:
+        screen_contour = approx
+        break
+if not isinstance(screen_contour, np.ndarray):
+    print('Nie można przetworzyć obrazu')
+    sys.exit(1)
+
+image_v = cv2.drawContours(image.copy(), screen_contour, -1, (0,255,0),10)
+cv2.imshow('outline_v', image_v)
+
+image_cnt = cv2.drawContours(image.copy(), [screen_contour], -1, (0,255,0), 3)
+cv2.imshow('outlinecnt', image_cnt)
+
+#ekstrakca perspektywy
+warped_image = get_perspective(original_image, screen_contour, ratio)
+cv2.imshow('out', warped_image)
+
+#konwersja do skali szarości
+warped_image = cv2.cvtColor(warped_image, cv2.COLOR_BGR2GRAY)
+
+#obliczenie maski progowej na podstawie detekcji pikseli
+T = threshold_local(image = warped_image, block_size = 11, offset = 10, method = 'gaussian')
+warped_image = (warped_image > T).astype('uint8') * 255
+cv2.imshow('warped_image', warped_image)
+cv2.waitKey(0)
+
