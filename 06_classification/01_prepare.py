@@ -10,7 +10,7 @@ CLS_2 = 'lion'
 
 TRAIN_RATIO = 0.7
 VALID_RATIO = 0.2
-DATA_DIR = r'\images'
+DATA_DIR = r'./images'
 
 raw_no_of_files = {}
 classes = [CLS_1, CLS_2]
@@ -90,7 +90,7 @@ for i,fname in enumerate(cls_2_names):
         shutil.copyfile(src, dst)
     if train_idx_cls_2 < i < valid_idx_cls_2:
         src = os.path.join(base_dir, CLS_2, fname)
-        dst = os.path.join(valid_cls_1_dir, fname)
+        dst = os.path.join(valid_cls_2_dir, fname)
         shutil.copyfile(src, dst)
     if valid_idx_cls_2 < i <= len(cls_2_names):
         src = os.path.join(base_dir, CLS_2, fname)
